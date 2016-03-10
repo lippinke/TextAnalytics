@@ -14,6 +14,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class Word2VecKeywords {
+    //TODO: later make these non static.
     static final int nMatches = 20;
     static final double threshold = 0.55;
 
@@ -70,7 +71,7 @@ public class Word2VecKeywords {
         }
     }
 
-    private static void interact(Searcher searcher) throws IOException, Searcher.UnknownWordException {
+    public static List<TermDistance> interact(Searcher searcher) throws IOException, Searcher.UnknownWordException {
 
         try (BufferedReader br = new BufferedReader(new InputStreamReader(System.in))) {
             while (true) {
@@ -85,18 +86,18 @@ public class Word2VecKeywords {
                 System.out.println(searchPhrase);
 
                 //Create a list that will usually have sufficient capacity and not need resized.
-                List<TermDistance> bestMatches = new ArrayList<>((2*words.length-1)*nMatches);
+                List<TermDistance> bestMatches = new ArrayList<>((2 * words.length - 1) * nMatches);
 
                 String w_prev = null;
                 String w_2prev = null;
-                for(String w : words){
+                for (String w : words) {
                     String wLower = w.toLowerCase();
                     searchWord(searcher, wLower, 0, bestMatches);
-                    if(w_prev != null){
+                    if (w_prev != null) {
                         String compoundW = w_prev + "_" + wLower;
                         searchWord(searcher, compoundW, 1, bestMatches);
                     }
-                    if(w_2prev != null){
+                    if (w_2prev != null) {
                         String compoundW = w_2prev + "_" + w_prev + "_" + wLower;
                         searchWord(searcher, compoundW, 2, bestMatches);
                     }
@@ -106,10 +107,12 @@ public class Word2VecKeywords {
                 }
                 Collections.sort(bestMatches);
 
-                System.out.println("Best Matches:");
-                printBest(bestMatches);
+//                System.out.println("Best Matches:");
+//                printBest(bestMatches);
+                return bestMatches;
             }
         }
+        return null;
     }
 }
 

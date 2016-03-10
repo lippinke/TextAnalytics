@@ -3,12 +3,13 @@ package team.eight;
 import java.io.IOException;
 import java.util.*;
 
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.*;
 
-import org.apache.mahout.math.NamedVector;
 import org.apache.mahout.math.RandomAccessSparseVector;
 import org.apache.mahout.math.VectorWritable;
 
@@ -18,17 +19,28 @@ import org.apache.mahout.math.VectorWritable;
 public class Search {
 
     public static void main(String[] args) {
+        String dictPathString = args[0];
+        String vectorsPath = args[1];
+        List<String> searchList = Arrays.asList("hitler", "nazi", "germany");
+
+        List<Pair<String, List<Double>>> docList = searchVectors(dictPathString, vectorsPath, searchList, 0, 12);
+        for(Pair<String, List<Double>> pair : docList) {
+            System.out.println("Document: " + pair.getKey() + " TFIDF: " + pair.getValue().toString());
+        }
+    }
+
+    public static List<Pair<String, List<Double>>> searchVectors(String dictPathString, String vectorsPath, List<String> keywords, int pad1, int pad2){
         Configuration conf = new Configuration();
         conf.set("io.serializations",
                 "org.apache.hadoop.io.serializer.JavaSerialization,"
                         + "org.apache.hadoop.io.serializer.WritableSerialization");
         try {
-            FileSystem fs = FileSystem.get(conf);
+            FileSystem.get(conf);
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-        String dictPathString = args[0];
+
         Path dictPath = new Path(dictPathString);
 
         SequenceFile.Reader dictReader = null;
@@ -39,7 +51,7 @@ public class Search {
         }
         IntWritable dicKey = new IntWritable();
         Text text = new Text();
-        HashMap<String, Integer> dictionaryMap = new HashMap<String, Integer>();
+        HashMap<String, Integer> dictionaryMap = new HashMap<>();
         try {
             assert dictReader != null;
             while (dictReader.next(text, dicKey)) {
@@ -54,15 +66,18 @@ public class Search {
             e.printStackTrace();
         }
 
-        String wordString = args[2];
-        Integer wordIndex = dictionaryMap.get(wordString);
-
-        if(wordIndex == null) {
-            System.out.println("Word not in dictionary :(");
-            return;
+        ArrayList<Integer> wordIndices = new ArrayList<>(keywords.size());
+        System.out.print(padRight(" ", pad1));
+        for(String keyword : keywords){
+            Integer wordIndex = dictionaryMap.get(keyword);
+            if(wordIndex != null) {
+                wordIndices.add(wordIndex);
+                System.out.print(padRight(keyword,pad2));
+            }
         }
 
-        String vectorsPath = args[1];
+        System.out.println();
+
         Path path = new Path(vectorsPath);
 
         SequenceFile.Reader vectorReader = null;
@@ -71,18 +86,28 @@ public class Search {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
         Text key = new Text();
         VectorWritable value = new VectorWritable();
+
+        List<Pair<String, List<Double>>> docList = new ArrayList<>();
+
         try {
             assert vectorReader != null;
             while (vectorReader.next(key, value)) {
                 RandomAccessSparseVector vector = (RandomAccessSparseVector) value.get();
-                //NamedVector namedVector = (NamedVector)value.get();
-                //RandomAccessSparseVector vector = (RandomAccessSparseVector)(namedVector.getDelegate());
 
-                double weight = vector.getQuick(wordIndex);
-                if(weight != 0) {
-                    System.out.println("Document: " + key + " TF-IDF weight: " + weight);
+                List<Double> docTFIDF = new ArrayList<>(wordIndices.size());
+                Boolean allZeroes = true;
+                for (Integer wordIndex : wordIndices){
+                    double weight = vector.getQuick(wordIndex);
+                    docTFIDF.add(weight);
+                    if(weight != 0) {
+                        allZeroes = false;
+                    }
+                }
+                if(!allZeroes) {
+                    docList.add(new ImmutablePair<>(key.toString(), docTFIDF));
                 }
 
             }
@@ -94,6 +119,10 @@ public class Search {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        return docList;
+    }
+    public static String padRight(String s, int n) {
+        return String.format("%1$-" + n + "s", s);
     }
 
 }
