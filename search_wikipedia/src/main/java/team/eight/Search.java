@@ -13,9 +13,6 @@ import org.apache.hadoop.io.*;
 import org.apache.mahout.math.RandomAccessSparseVector;
 import org.apache.mahout.math.VectorWritable;
 
-/**
- * Created by ice-rock on 3/8/16.
- */
 public class Search {
 
     public static void main(String[] args) {
@@ -23,7 +20,7 @@ public class Search {
         String vectorsPath = args[1];
         List<String> searchList = Arrays.asList("hitler", "nazi", "germany");
 
-        List<Pair<String, List<Double>>> docList = searchVectors(dictPathString, vectorsPath, searchList, 0, 12);
+        List<Pair<String, List<Double>>> docList = searchVectors(dictPathString, vectorsPath, searchList, 1, 12);
         for(Pair<String, List<Double>> pair : docList) {
             System.out.println("Document: " + pair.getKey() + " TFIDF: " + pair.getValue().toString());
         }

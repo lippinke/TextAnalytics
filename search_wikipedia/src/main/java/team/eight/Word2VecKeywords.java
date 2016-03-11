@@ -5,6 +5,9 @@ package team.eight; /**
 import com.medallia.word2vec.Searcher;
 import com.medallia.word2vec.Word2VecModel;
 
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -29,14 +32,14 @@ public class Word2VecKeywords {
         }
 
         try {
-            interact(model.forSearch());
+            List<Pair<String, Double>> bestMatches = interact(model.forSearch());
+            printBest(bestMatches, 30);
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-
-    private static void addBest(List<TermDistance> bestMatches,
+    private static void addBest(List<Pair<String, Double>> bestMatches,
                                 List<Searcher.Match> matches,
                                 int compound,
                                 double threshold)
@@ -46,21 +49,24 @@ public class Word2VecKeywords {
         for(Searcher.Match m : matches){
             double weightedDistance = scale * m.distance();
             if(weightedDistance > threshold) {
-                TermDistance pair = new TermDistance(m.match(), weightedDistance);
+                Pair<String, Double> pair = new ImmutablePair<>(m.match(), weightedDistance);
                 bestMatches.add(pair);
             }
         }
     }
 
-    public static void printBest(List<TermDistance> bestMatches)
+    public static void printBest(List<Pair<String, Double>> bestMatches, int padding)
     {
-        for(TermDistance t : bestMatches){
-            System.out.println(t);
+        for(Pair<String, Double> pair : bestMatches){
+            System.out.println(padRight(pair.getKey() + ": ", padding) + pair.getValue());
         }
-
     }
 
-    private static void searchWord(Searcher searcher, String word, int compoundLevel, List bestMatches)
+    public static String padRight(String s, int n) {
+        return String.format("%1$-" + n + "s", s);
+    }
+
+    private static void searchWord(Searcher searcher, String word, int compoundLevel, List<Pair<String, Double>> bestMatches)
     {
         try {
             List<Searcher.Match> matches = searcher.getMatches(word, nMatches);
@@ -71,7 +77,7 @@ public class Word2VecKeywords {
         }
     }
 
-    public static List<TermDistance> interact(Searcher searcher) throws IOException, Searcher.UnknownWordException {
+    public static List<Pair<String, Double>> interact(Searcher searcher) throws IOException, Searcher.UnknownWordException {
 
         try (BufferedReader br = new BufferedReader(new InputStreamReader(System.in))) {
             while (true) {
@@ -86,7 +92,7 @@ public class Word2VecKeywords {
                 System.out.println(searchPhrase);
 
                 //Create a list that will usually have sufficient capacity and not need resized.
-                List<TermDistance> bestMatches = new ArrayList<>((2 * words.length - 1) * nMatches);
+                List<Pair<String, Double>> bestMatches = new ArrayList<>((2 * words.length - 1) * nMatches);
 
                 String w_prev = null;
                 String w_2prev = null;
@@ -107,8 +113,6 @@ public class Word2VecKeywords {
                 }
                 Collections.sort(bestMatches);
 
-//                System.out.println("Best Matches:");
-//                printBest(bestMatches);
                 return bestMatches;
             }
         }

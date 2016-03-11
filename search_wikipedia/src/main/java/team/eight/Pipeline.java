@@ -7,13 +7,8 @@ import org.apache.commons.lang3.tuple.Pair;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.jar.Attributes;
 
-/**
- * Created by ice-rock on 3/10/16.
- */
 public class Pipeline {
     public static final String ANSI_RESET = "\u001B[0m";
     public static final String ANSI_BLACK = "\u001B[30m";
@@ -38,22 +33,22 @@ public class Pipeline {
             e.printStackTrace();
         }
 
-        List<TermDistance> bestWords = null;
+        List<Pair<String, Double>> bestWords;
 
         try {
             assert model != null;
             bestWords = Word2VecKeywords.interact(model.forSearch());
-            Word2VecKeywords.printBest(bestWords);
+            Word2VecKeywords.printBest(bestWords, NAME_LIMIT);
         } catch (Exception e) {
             e.printStackTrace();
             return;
         }
         assert bestWords != null;
-        List<String> searchList = new ArrayList<String>(bestWords.size());
+        List<String> searchList = new ArrayList<>(bestWords.size());
         String dictPathString = args[0];
         String vectorsPath = args[1];
-        for(TermDistance term : bestWords) {
-            searchList.add(term.get_term());
+        for(Pair<String, Double> term : bestWords) {
+            searchList.add(term.getKey());
         }
 
         List<Pair<String, List<Double>>> docList = Search.searchVectors(dictPathString, vectorsPath, searchList, NAME_LIMIT, KEYWORD_LIMIT);
