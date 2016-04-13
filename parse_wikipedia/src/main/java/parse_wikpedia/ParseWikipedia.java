@@ -45,6 +45,7 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat;
 import org.apache.hadoop.util.GenericsUtil;
+import org.apache.log4j.Level;
 import org.apache.mahout.common.CommandLineUtil;
 import org.apache.mahout.common.HadoopUtil;
 import org.apache.mahout.common.commandline.DefaultOptionCreator;
@@ -120,11 +121,12 @@ public final class ParseWikipedia {
     job.setJarByClass(ParseWikipedia.class);
 
     HadoopUtil.delete(conf, outPath);
-    
+      System.out.println("Got here.");
     boolean succeeded = job.waitForCompletion(true);
     if (!succeeded) {
       throw new IllegalStateException("Job failed!");
     }
+      System.out.println("Finished job.");
 
     /* TFIDF*/
 
@@ -132,7 +134,7 @@ public final class ParseWikipedia {
             DocumentProcessor.TOKENIZED_DOCUMENT_OUTPUT_FOLDER);
     Path termFrequencyVectorsPath = new Path(output,
             DictionaryVectorizer.DOCUMENT_VECTOR_OUTPUT_FOLDER);
-    Path tfidfPath = new Path(outPath + "tfidf");
+    Path tfidfPath = new Path(outPath + "/tfidf");
     DocumentProcessor.tokenizeDocuments(outPath,
             StandardAnalyzer.class, tokenizedDocumentsPath, conf);
 
@@ -145,6 +147,8 @@ public final class ParseWikipedia {
     Pair<Long[], List<Path>> documentFrequencies = TFIDFConverter
             .calculateDF(termFrequencyVectorsPath, tfidfPath,
                          conf, 100);
+
+    System.out.println(documentFrequencies.toString());
 
     TFIDFConverter.processTfIdf(termFrequencyVectorsPath, tfidfPath,
             conf, documentFrequencies, 1, 100,

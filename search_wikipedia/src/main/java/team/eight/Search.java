@@ -15,18 +15,7 @@ import org.apache.mahout.math.VectorWritable;
 
 public class Search {
 
-    public static void main(String[] args) {
-        String dictPathString = args[0];
-        String vectorsPath = args[1];
-        List<String> searchList = Arrays.asList("hitler", "nazi", "germany");
-
-        List<Pair<String, List<Double>>> docList = searchVectors(dictPathString, vectorsPath, searchList, 1, 12);
-        for(Pair<String, List<Double>> pair : docList) {
-            System.out.println("Document: " + pair.getKey() + " TFIDF: " + pair.getValue().toString());
-        }
-    }
-
-    public static List<Pair<String, List<Double>>> searchVectors(String dictPathString, String vectorsPath, List<String> keywords, int pad1, int pad2){
+    public static Pair<List<Pair<String, List<Double>>>, List<String>> searchVectors(String dictPathString, String vectorsPath, List<String> keywords, int pad1, int pad2){
         Configuration conf = new Configuration();
         conf.set("io.serializations",
                 "org.apache.hadoop.io.serializer.JavaSerialization,"
@@ -36,42 +25,52 @@ public class Search {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-
-        Path dictPath = new Path(dictPathString);
-
-        SequenceFile.Reader dictReader = null;
-        try {
-            dictReader = new SequenceFile.Reader(conf, SequenceFile.Reader.file(dictPath));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        IntWritable dicKey = new IntWritable();
-        Text text = new Text();
-        HashMap<String, Integer> dictionaryMap = new HashMap<>();
-        try {
-            assert dictReader != null;
-            while (dictReader.next(text, dicKey)) {
-                dictionaryMap.put(text.toString(), Integer.parseInt(dicKey.toString()));
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        try {
-            dictReader.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
+        System.out.println("3.1");
         ArrayList<Integer> wordIndices = new ArrayList<>(keywords.size());
-        System.out.print(padRight(" ", pad1));
-        for(String keyword : keywords){
-            Integer wordIndex = dictionaryMap.get(keyword);
-            if(wordIndex != null) {
-                wordIndices.add(wordIndex);
-                System.out.print(padRight(keyword,pad2));
+        List<String> usedKeywords = new ArrayList<>();
+        int dictFileNum = 0;
+
+        while(true) {
+            Path dictPath = new Path(dictPathString + "-" + dictFileNum++);
+
+            SequenceFile.Reader dictReader = null;
+            try {
+                dictReader = new SequenceFile.Reader(conf, SequenceFile.Reader.file(dictPath));
+            } catch (IOException e) {
+                break;
+            }
+
+            IntWritable dicKey = new IntWritable();
+            Text text = new Text();
+            HashMap<String, Integer> dictionaryMap = new HashMap<>();
+            try {
+                assert dictReader != null;
+                while (dictReader.next(text, dicKey)) {
+                    dictionaryMap.put(text.toString(), Integer.parseInt(dicKey.toString()));
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            try {
+                dictReader.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            System.out.print(padRight(" ", pad1));
+            for (String keyword : keywords) {
+                Integer wordIndex = dictionaryMap.get(keyword);
+                if (wordIndex != null) {
+                    wordIndices.add(wordIndex);
+                    /* Instead of printing this, we should return the keywords used.
+                    System.out.print(padRight(keyword, pad2));
+                     */
+                    usedKeywords.add(keyword);
+                }
             }
         }
+        System.out.println(wordIndices.toString());
+        System.out.println("3.4");
 
         System.out.println();
 
@@ -83,6 +82,7 @@ public class Search {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        System.out.println("3.5");
 
         Text key = new Text();
         VectorWritable value = new VectorWritable();
@@ -116,7 +116,8 @@ public class Search {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return docList;
+        System.out.println("3.6");
+        return new ImmutablePair<>(docList, usedKeywords);
     }
     public static String padRight(String s, int n) {
         return String.format("%1$-" + n + "s", s);

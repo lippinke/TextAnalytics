@@ -13,6 +13,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -78,7 +79,7 @@ public class Word2VecKeywords {
     }
 
     public static List<Pair<String, Double>> interact(Searcher searcher) throws IOException, Searcher.UnknownWordException {
-
+        System.out.println("1.5");
         try (BufferedReader br = new BufferedReader(new InputStreamReader(System.in))) {
             while (true) {
                 System.out.print("Enter word (EXIT to break): ");

@@ -49,6 +49,10 @@ public class WikipediaParser extends Mapper<LongWritable, Text, Text, Text> {
 
   private static final Pattern TITLE = Pattern.compile("<title>(.*)<\\/title>");
 
+  private static final String BEGIN_DOUBLE_CURLY_BRACES = "{{";
+  private static final String END_DOUBLE_CURLY_BRACES = "}}";
+  private static final String QUOT = "&quot;";
+
   private static final String REDIRECT = "#REDIRECT";
 
   @Override
@@ -65,8 +69,10 @@ public class WikipediaParser extends Mapper<LongWritable, Text, Text, Text> {
       document = stripDocumentFormatting(document);
       title = getTitle(content);
     } catch (RuntimeException e) {
+      System.out.println("Exception: " + e);
       return;
     }
+    System.out.println(title);
     context.write(new Text(title), new Text(document));
   }
 
@@ -82,9 +88,39 @@ public class WikipediaParser extends Mapper<LongWritable, Text, Text, Text> {
   }
 
   private static String stripDocumentFormatting(String xml) {
-//      return xml.replaceAll("(\\{\\{([^{}]+|\\{\\{[^{}]*\\}\\})*\\}\\})|(\\{\\|(((?!\\|})[\\s\\S])*)+\\|\\})|(==[^=]+==)|(===[^=]+===)|(====[^=]+====)|(\\[\\[File:[^\\]]+\\]\\])|(\\[\\[Category:[^\\]]+\\]\\])|(&lt;!--(((?!--&gt;)[\\s\\S])*)+--&gt;)|(&lt;!--&quot(((?!--&gt;)[\\s\\S])*)+--&gt;)|(&lt;ref((?!&gt;)[\\s\\S])*\\/&gt;)|(&lt;ref((?!\\/ref&gt;)[\\s\\S])*\\/ref&gt;)|(&quot;)|(\\[http:\\/\\/(.+)\\])", " ");
-//      return xml.replaceAll("(\\{\\{([^{}]+|\\{\\{[^{}]*\\}\\})*\\}\\})|(\\{\\|(((?!\\|})[\\s\\S])*)+\\|\\})|(==[^=]+==)|(===[^=]+===)|(====[^=]+====)|(\\[\\[File:[^\\]]+\\]\\])|(\\[\\[Category:[^\\]]+\\]\\])|(&quot;)|(\\[http:\\/\\/(.+)\\])", "");
-      return xml.replaceAll("(&quot;)", "");
+    /* This takes a very long time and I can't figure out why.*/
+    StringBuilder output = new StringBuilder(xml.length());
+    int double_braces_nest = 0;
+    boolean capturing = true;
+    for (int i = 0; i < xml.length(); ++i) {
+      if (i+2 < xml.length()) {
+        if (xml.substring(i, i + 2).equals(BEGIN_DOUBLE_CURLY_BRACES)) {
+          capturing = false;
+          ++double_braces_nest;
+          i += BEGIN_DOUBLE_CURLY_BRACES.length() - 1;
+          continue;
+        }
+        if (xml.substring(i, i + 2).equals(END_DOUBLE_CURLY_BRACES)) {
+          --double_braces_nest;
+          if (double_braces_nest == 0) {
+            capturing = true;
+          }
+          i += END_DOUBLE_CURLY_BRACES.length() - 1;
+          continue;
+        }
+      }
+      if (i+6 < xml.length()) {
+        if (xml.substring(i, i + 2).equals(QUOT)) {
+          i += QUOT.length() - 1;
+          continue;
+        }
+      }
+
+      if(capturing && i < xml.length()) {
+        output.append(xml.charAt(i));
+      }
+    }
+    return output.toString();
   }
 
 }
