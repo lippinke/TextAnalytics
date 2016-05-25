@@ -2,7 +2,6 @@ package team.eight;
 
 import com.medallia.word2vec.Searcher;
 import com.medallia.word2vec.Word2VecModel;
-import org.apache.commons.beanutils.converters.BooleanArrayConverter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
@@ -24,12 +23,11 @@ public class Pipeline {
 
     public static final int NAME_LIMIT = 70;
     public static final int KEYWORD_LIMIT = 12;
-//    public static final String[] searches = {"great barrier reef", "patagonia", "relativity", "comcast"};
-    public static final String[] searches = {"oregon"};
+    public static final String[] searches = {"great barrier reef", "patagonia", "relativity", "comcast"};
     public static final boolean word2vec = true;
+    public static final int resultsToPrint = 50;
 
     public static void main(String[] args) {
-//        File binfile = new File("vectors-phrase.bin");
         Word2VecModel model = null;
         Searcher searcher = null;
         if(word2vec == true) {
@@ -42,7 +40,6 @@ public class Pipeline {
                 System.out.println(ANSI_PURPLE + "Initializing word2vec..." + ANSI_RESET);
                 model = Word2VecModel.fromBinFile(binfile);
                 searcher = model.forSearch();
-//                model = Medallia.fromBinFile(binfile);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -116,10 +113,9 @@ public class Pipeline {
             }
 
             TreeSet<Pair<String, Double>> weightedDocSet = new TreeSet<>(new DocumentComparison());
-//        ArrayList<Pair<String, Double>> weightedDocSet = new ArrayList<>();
             for (Pair<String, List<Double>> pair : docList) {
                 //Exclude Wikipedia and List of articles.
-                //TODO: Move this exclusion to the parsing rather than searching for speed.
+                //Moving this exclusion to the parsing rather than searching could increase speed.
                 if (pair.getKey().length() > 8 && Objects.equals(pair.getKey().substring(0, 8), "List of ") ||
                         pair.getKey().length() > 10 && Objects.equals(pair.getKey().substring(0, 10), "Wikipedia:")) {
                     continue;
@@ -127,17 +123,13 @@ public class Pipeline {
 
                 double weight = 0;
                 for (int i = 0; i < pair.getValue().size(); ++i) {
-            /* Easy weight function for now */
-                    //weight += pair.getValue().get(i);
+                    /* Simple weight function for now */
                     weight += pair.getValue().get(i) * weightsVector.get(i) * weightsVector.get(i);
                 }
                 weightedDocSet.add(new ImmutablePair<>(pair.getKey(), weight));
             }
 
-//        weightedDocSet.sort(new DocumentComparison());
-
-            //PrintWriter writer = new PrintWriter("file.txt", "UTF-8");
-            int numToPrint = 50; /* print an arbitrary amount */
+            int numToPrint = resultsToPrint;
             for (Pair<String, Double> doc : weightedDocSet) {
                 if (numToPrint-- == 0) {
                     break;
