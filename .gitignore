@@ -8,6 +8,11 @@ dependency-reduced-pom.xml
 buildNumber.properties
 .mvn/timing.properties
 
+#data
+dictionary*
+part-r-00000
+vectors-phrase-wikipedia.bin
+parse_output/
 
 # Intellij
 .idea/

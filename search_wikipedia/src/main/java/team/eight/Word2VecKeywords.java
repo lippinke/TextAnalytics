@@ -69,6 +69,7 @@ public class Word2VecKeywords {
 
     private static void searchWord(Searcher searcher, String word, int compoundLevel, List<Pair<String, Double>> bestMatches)
     {
+        System.out.println("Searching: " + word);
         try {
             List<Searcher.Match> matches = searcher.getMatches(word, nMatches);
             addBest(bestMatches, matches, compoundLevel, threshold);
@@ -78,16 +79,28 @@ public class Word2VecKeywords {
         }
     }
 
-    public static List<Pair<String, Double>> interact(Searcher searcher) throws IOException, Searcher.UnknownWordException {
-        System.out.println("1.5");
-        try (BufferedReader br = new BufferedReader(new InputStreamReader(System.in))) {
-            while (true) {
+        public static List<Pair<String, Double>> interact(Searcher searcher) throws IOException, Searcher.UnknownWordException {
+            try (BufferedReader br = new BufferedReader(new InputStreamReader(System.in))) {
                 System.out.print("Enter word (EXIT to break): ");
                 String searchPhrase = br.readLine();
 
                 if (searchPhrase.equals("EXIT")) {
-                    break;
+                    return null;
                 }
+                return interact(searcher, searchPhrase);
+            }
+        }
+
+        public static List<Pair<String, Double>> interact(Searcher searcher, String searchPhrase) throws IOException, Searcher.UnknownWordException {
+
+//        try (BufferedReader br = new BufferedReader(new InputStreamReader(System.in))) {
+//            while (true) {
+//                System.out.print("Enter word (EXIT to break): ");
+//                String searchPhrase = br.readLine();
+//
+//                if (searchPhrase.equals("EXIT")) {
+//                    break;
+//                }
 
                 String[] words = searchPhrase.split("\\s+");
                 System.out.println(searchPhrase);
@@ -115,9 +128,9 @@ public class Word2VecKeywords {
                 Collections.sort(bestMatches);
 
                 return bestMatches;
-            }
-        }
-        return null;
+        //    } //while(true)
+        //} //try()
+        //return null;
     }
 }
 

@@ -25,7 +25,6 @@ public class Search {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        System.out.println("3.1");
         ArrayList<Integer> wordIndices = new ArrayList<>(keywords.size());
         List<String> usedKeywords = new ArrayList<>();
         int dictFileNum = 0;
@@ -57,7 +56,7 @@ public class Search {
                 e.printStackTrace();
             }
 
-            System.out.print(padRight(" ", pad1));
+            //System.out.print(padRight(" ", pad1));
             for (String keyword : keywords) {
                 Integer wordIndex = dictionaryMap.get(keyword);
                 if (wordIndex != null) {
@@ -69,10 +68,6 @@ public class Search {
                 }
             }
         }
-        System.out.println(wordIndices.toString());
-        System.out.println("3.4");
-
-        System.out.println();
 
         Path path = new Path(vectorsPath);
 
@@ -82,7 +77,6 @@ public class Search {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        System.out.println("3.5");
 
         Text key = new Text();
         VectorWritable value = new VectorWritable();
@@ -116,7 +110,6 @@ public class Search {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        System.out.println("3.6");
         return new ImmutablePair<>(docList, usedKeywords);
     }
     public static String padRight(String s, int n) {
