@@ -7,6 +7,8 @@ import org.apache.commons.collections.Buffer;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.hadoop.util.hash.Hash;
+import team.eight.Search;
 import team.eight.Word2VecKeywords;
 
 import java.io.*;
@@ -29,8 +31,81 @@ public class VectorAddition {
     public static final int resultsToPrint = 50;
 
     public static void main(String[] args) {
+        String dictPathString = args[0];
+        String vectorsPath = args[1];
+
         Word2VecAddition adder = loadVectors("../vectors-phrase-wikipedia.bin");
-        simpleAdd(adder);
+        System.out.println("Calculating frog vector...");
+        double[] frogDoc = calculateDocVector("./frog_wiki.txt", adder);
+        System.out.println("Calculating OSU vector...");
+        double[] osuDoc = calculateDocVector("./oregon_state_university_wiki.txt", adder);
+        System.out.println("Calculating Corvallis Vector");
+        double[] corvallisDoc = calculateDocVector("./corvallis_wikipedia.txt", adder);
+
+        double d1 = adder.calculateDistance(osuDoc, corvallisDoc);
+        double d2 = adder.calculateDistance(osuDoc, frogDoc);
+
+        String[] docTitleArr = {"Corvallis, Oregon", "Oregon State University", "Frog"};
+        ArrayList<String> docTitles = new ArrayList<>(Arrays.asList(docTitleArr));
+        HashMap<String, double[]> docVecs = calculateDocVectorsTfidf(
+                docTitles, dictPathString, vectorsPath, adder);
+
+        //------
+        System.out.println("OSU vs Corvallis: " + d1);
+        System.out.println("OSU vs Frogs: " + d2);
+
+        System.out.println("The frog wiki is most similar to...");
+        //printMatches(frogDoc, adder, 10);
+        printMatches(docVecs.get("Frog"), adder, 10);
+
+        System.out.println("The corvallis wiki is most similar to...");
+        //printMatches(corvallisDoc, adder, 10);
+        printMatches(docVecs.get("Corvallis, Oregon"), adder, 10);
+
+        System.out.println("The osu wiki is most similar to...");
+        //printMatches(osuDoc, adder, 10);
+        printMatches(docVecs.get("Oregon State University"), adder, 10);
+
+        //------
+        //simpleAdd(adder);
+    }
+
+
+
+    public static HashMap<String, double[]> calculateDocVectorsTfidf(
+            List<String> docTitles, String dictFile, String tfidfFile, Word2VecAddition adder){
+        HashMap<String, ArrayList<Pair<String, Double>>> docTfidf = Search.getDocTFIDF(dictFile, tfidfFile, docTitles);
+        HashMap<String, double[]> docVectors = new HashMap<>();
+
+        double[] vector;
+        double[] docVector = null;
+        int tfidfSum = 0;
+        for(String docTitle : docTitles){
+            //System.out.println(docTitle);
+            //System.out.println(docTfidf.get(docTitle).toString());
+            for(Pair<String, Double> word: docTfidf.get(docTitle)){
+                try {
+                    vector = adder.getVector(word.getKey());
+                    tfidfSum += word.getValue(); //Wait to increment counter until we see that the word is in the dictionary
+                    if (docVector == null){
+                        docVector = adder.scaleVector(vector, word.getValue());
+                    } else {
+                        docVector = adder.getSum(docVector, adder.scaleVector(vector, word.getValue()));
+                    }
+                } catch (Searcher.UnknownWordException e) {
+                    //System.out.println("Unknown word: " + word.getKey());
+                }
+            }
+
+            for(int i = 0; i < docVector.length; ++i) {
+            /* Scale down all vector dimensions */
+                docVector[i] /= tfidfSum;
+            }
+
+            docVectors.put(docTitle, docVector);
+        }
+
+        return docVectors;
     }
 
     public static double[] calculateDocVector(String docPath, Word2VecAddition adder){
@@ -58,18 +133,36 @@ public class VectorAddition {
 
         String[] wordList = doc.split(" ");
         double[] vector;
-        double[] docVector = new double[0];
+        double[] docVector = null;
+        int count = 0;
         for(String word : wordList){
             try {
                 vector = adder.getVector(word);
-                docVector = adder.getSum(docVector, vector);
+                count++; //Wait to increment counter until we see that the word is in the dictionary
+                if (docVector == null){
+                    docVector = vector.clone();
+                } else {
+                    docVector = adder.getSum(docVector, vector);
+                }
             } catch (Searcher.UnknownWordException e) {
                 //do nothing
             }
         }
 
+        for(int i = 0; i < docVector.length; ++i) {
+            /* Scale down all vector dimensions */
+            docVector[i] /= count;
+        }
+
         return docVector;
 
+    }
+
+    public static void printMatches(double[] docVector, Word2VecAddition adder, int nMatches){
+        List<Searcher.Match> matches = adder.getMatches(docVector, nMatches);
+        for(Searcher.Match m : matches) {
+            System.out.println(m.match() + " " + m.distance());
+        }
     }
 
     public static void simpleAdd(Word2VecAddition adder){

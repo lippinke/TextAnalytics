@@ -108,11 +108,26 @@ public class Word2VecAddition implements Searcher {
         return diff;
     }
 
-    /** @return Vector difference from v1 to v2 */
     public double[] getSum(double[] v1, double[] v2) {
         double[] sum = new double[model.layerSize];
         for (int i = 0; i < model.layerSize; i++)
             sum[i] = v1[i] + v2[i];
+        return sum;
+    }
+
+    public double[] scaleVector(double[] v, double weight) {
+        double[] scaled = new double[model.layerSize];
+        for (int i = 0; i < model.layerSize; i++)
+            scaled[i] = v[i] * weight;
+        return scaled;
+    }
+
+    public double[] getAverage(double[] v1, double[] v2) {
+        double[] sum = new double[model.layerSize];
+        for (int i = 0; i < model.layerSize; i++) {
+            sum[i] = v1[i] + v2[i];
+            sum[i] /= 2;
+        }
         return sum;
     }
 
