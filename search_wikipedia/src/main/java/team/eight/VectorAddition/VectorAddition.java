@@ -3,30 +3,43 @@ package team.eight.VectorAddition;
 import com.medallia.word2vec.Searcher;
 import com.medallia.word2vec.Word2VecAddition;
 import com.medallia.word2vec.Word2VecModel;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
+import team.eight.Word2VecKeywords;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.List;
+import java.io.*;
+import java.util.*;
 
-/**
- * Created by ice-rock on 5/25/16.
- */
 public class VectorAddition {
+    public static final String ANSI_RESET = "\u001B[0m";
+    public static final String ANSI_BLACK = "\u001B[30m";
+    public static final String ANSI_RED = "\u001B[31m";
+    public static final String ANSI_GREEN = "\u001B[32m";
+    public static final String ANSI_YELLOW = "\u001B[33m";
+    public static final String ANSI_BLUE = "\u001B[34m";
+    public static final String ANSI_PURPLE = "\u001B[35m";
+    public static final String ANSI_CYAN = "\u001B[36m";
+    public static final String ANSI_WHITE = "\u001B[37m";
+
+
+    public static final int NAME_LIMIT = 70;
+    public static final int KEYWORD_LIMIT = 12;
+    public static final int resultsToPrint = 50;
+
     public static void main(String[] args) {
-        //Open bin file
+        Word2VecModel model = null;
+        Word2VecAddition adder = null;
+
         File binfile = new File("../vectors-phrase-wikipedia.bin");
         if (!binfile.exists()) {
             System.out.println("Error: Missing vector file. Exiting.");
             return;
         }
-
-        //Create word2vec model
-        Word2VecModel model = null;
         try {
-            System.out.println("Initializing word2vec...");
+            System.out.println(ANSI_PURPLE + "Initializing word2vec..." + ANSI_RESET);
             model = Word2VecModel.fromBinFile(binfile);
+            adder = new Word2VecAddition(model);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -41,22 +54,18 @@ public class VectorAddition {
         try {
             string1 = br.readLine();
             string2 = br.readLine();
-//            string3 = br.readLine();
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-        Word2VecAddition adder = new Word2VecAddition(model);
-
         double[] vec1 = new double[0];
         double[] vec2 = new double[0];
-        double[] vec3 = new double[0];
+        //double[] vec3 = new double[0];
         try {
-            vec1 = adder.getVector(string1);
-            vec2 = adder.getVector(string2);
-//            vec3 = adder.getVector(string3);
+        vec1 = adder.getVector(string1);
+        vec2 = adder.getVector(string2);
         } catch (Searcher.UnknownWordException e) {
-            e.printStackTrace();
+        e.printStackTrace();
         }
 
         double[] sumVector;
@@ -67,5 +76,11 @@ public class VectorAddition {
             System.out.println(m.match() + " " + m.distance());
         }
 
+
+
     }
 }
+
+
+
+
