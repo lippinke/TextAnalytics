@@ -65,7 +65,7 @@ public class Word2VecAddition implements Searcher {
         );
     }
 
-    private double calculateDistance(double[] otherVec, double[] vec) {
+    public double calculateDistance(double[] otherVec, double[] vec) {
         double d = 0;
         for (int a = 0; a < model.layerSize; a++)
             d += vec[a] * otherVec[a];
