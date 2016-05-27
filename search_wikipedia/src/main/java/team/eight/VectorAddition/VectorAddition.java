@@ -35,6 +35,9 @@ public class VectorAddition {
         String vectorsPath = args[1];
 
         Word2VecAddition adder = loadVectors("../vectors-phrase-wikipedia.bin");
+
+        System.out.println("Adding words naively without tfidf.");
+
         System.out.println("Calculating frog vector...");
         double[] frogDoc = calculateDocVector("./frog_wiki.txt", adder);
         System.out.println("Calculating OSU vector...");
@@ -44,6 +47,10 @@ public class VectorAddition {
 
         double d1 = adder.calculateDistance(osuDoc, corvallisDoc);
         double d2 = adder.calculateDistance(osuDoc, frogDoc);
+        System.out.println("OSU vs Corvallis: " + d1);
+        System.out.println("OSU vs Frogs: " + d2);
+
+        System.out.println("\nAdding words with tfidf weightings.");
 
         String[] docTitleArr = {"Corvallis, Oregon", "Oregon State University", "Frog"};
         ArrayList<String> docTitles = new ArrayList<>(Arrays.asList(docTitleArr));
@@ -51,8 +58,6 @@ public class VectorAddition {
                 docTitles, dictPathString, vectorsPath, adder);
 
         //------
-        System.out.println("OSU vs Corvallis: " + d1);
-        System.out.println("OSU vs Frogs: " + d2);
 
         System.out.println("The frog wiki is most similar to...");
         //printMatches(frogDoc, adder, 10);
@@ -65,6 +70,12 @@ public class VectorAddition {
         System.out.println("The osu wiki is most similar to...");
         //printMatches(osuDoc, adder, 10);
         printMatches(docVecs.get("Oregon State University"), adder, 10);
+
+        d1 = adder.calculateDistance(docVecs.get("Oregon State University"), docVecs.get("Corvallis, Oregon"));
+        d2 = adder.calculateDistance(docVecs.get("Oregon State University"), docVecs.get("Frog"));
+
+        System.out.println("OSU vs Corvallis: " + d1);
+        System.out.println("OSU vs Frogs: " + d2);
 
         //------
         //simpleAdd(adder);
@@ -83,7 +94,13 @@ public class VectorAddition {
         for(String docTitle : docTitles){
             //System.out.println(docTitle);
             //System.out.println(docTfidf.get(docTitle).toString());
-            for(Pair<String, Double> word: docTfidf.get(docTitle)){
+            ArrayList<Pair<String, Double>> wordList = docTfidf.get(docTitle);
+            wordList.sort(new WordComparison());
+            int k = wordList.size();
+            if(k > 10) {
+                wordList.subList(10, k).clear();
+            }
+            for(Pair<String, Double> word: wordList){
                 try {
                     vector = adder.getVector(word.getKey());
                     tfidfSum += word.getValue(); //Wait to increment counter until we see that the word is in the dictionary
@@ -228,6 +245,12 @@ public class VectorAddition {
     }
 }
 
+class WordComparison implements Comparator<Pair<String, Double>> {
 
-
-
+    @Override
+    public int compare(Pair<String, Double> p1, Pair<String, Double> p2) {
+        if (p1.getValue() < p2.getValue()) return 1;
+        else if (p1.getValue() > p2.getValue()) return -1;
+        else return 0;
+    }
+}
