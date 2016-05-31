@@ -13,10 +13,13 @@ Once you have an OS set up you need to download and install:
 Hadoop, Mahout and their dependencies.
 
 We looked at the following tutorials to get Hadoop set up:
+
 http://www.tutorialspoint.com/hadoop/hadoop_enviornment_setup.htm
+
 http://doctuts.readthedocs.org/en/latest/hadoop.html
 
 You will also need to checkout the word2vec code:
+
 https://code.google.com/archive/p/word2vec/
 
 Collecting and Processing Data
@@ -49,7 +52,8 @@ The end result of running word2phrase is a file containing word vectors.
 parsing and tfidf
 -----------------
 Command line arguments to ParseWikipedia:
--i /path/to/data/enwiki-latest-pages-articles.xml -o /path/to/parse_output
+
+	-i /path/to/data/enwiki-latest-pages-articles.xml -o /path/to/parse_output
 
 Running the Pipeline
 --------------------
@@ -58,7 +62,8 @@ This program takes in a search string then returns a list of relevant documents 
 Note: In order to run on the Wikipedia dataset you need at least 12GB RAM on your system allocated to this process.
 
 Command line arguments to Pipeline:
-/path/to/parse_output/dictionary.file /path/to/parse_output/tfidf/tfidf-vectors/part-r-00000
+
+	/path/to/parse_output/dictionary.file /path/to/parse_output/tfidf/tfidf-vectors/part-r-00000
 
 Running the Vector Addition
 ---------------------------
@@ -67,4 +72,5 @@ This is a program experimenting in the area of adding vectors to create document
 Note: In order to run on the Wikipedia dataset you need at least 12GB RAM on your system allocated to this process.
 
 Command line arguments to VectorAddition:
-/path/to/parse_output/dictionary.file /path/to/parse_output/tfidf/tfidf-vectors/part-r-00000
+
+	/path/to/parse_output/dictionary.file /path/to/parse_output/tfidf/tfidf-vectors/part-r-00000
